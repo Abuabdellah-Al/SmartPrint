@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3eac9883-40e5-42c3-8abe-1103340ee0e6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/smart_print.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/SmartPrint.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/SmartPrint.iml" afterDir="false" />
+    <list default="true" id="3eac9883-40e5-42c3-8abe-1103340ee0e6" name="Changes" comment="Working Prints with duplex">
+      <change afterPath="$PROJECT_DIR$/smart.ico" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/smart_print.py" beforeDir="false" afterPath="$PROJECT_DIR$/smart_print.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,9 +43,15 @@
     "Python.smart_print.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "master",
-    "ignore.virus.scanning.warn.message": "true"
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Users/moame/PycharmProjects/SmartPrint"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\moame\PycharmProjects\SmartPrint" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -62,6 +68,19 @@
       <option name="presentableId" value="Default" />
       <updated>1747428792311</updated>
     </task>
+    <task id="LOCAL-00001" summary="Working Prints with duplex">
+      <option name="closed" value="true" />
+      <created>1747435333925</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1747435333925</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Working Prints with duplex" />
+    <option name="LAST_COMMIT_MESSAGE" value="Working Prints with duplex" />
   </component>
 </project>

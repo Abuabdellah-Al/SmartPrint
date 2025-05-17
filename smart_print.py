@@ -1,5 +1,8 @@
+import ctypes
 import sys
 import os
+from xmlrpc.client import boolean
+
 import win32print
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
@@ -16,8 +19,10 @@ from PySide6.QtGui import QPageSize, QPageLayout
 class SmartPrintApp(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QIcon("smart.ico"))  # or .png
+        self.printer_count = None
         self.setWindowTitle("Smart Print")
-        self.setMinimumSize(1000, 832)
+        self.setMinimumSize(760, 832)
         self.settings = QSettings("SmartPrint", "Settings")
         self.image_files = []
         self.current_image_index = 0
@@ -36,7 +41,8 @@ class SmartPrintApp(QMainWindow):
 
         header = QLabel("Smart Print")
         header.setStyleSheet("""
-            font-size: 28px; 
+            font-family: akira expanded;
+            font-size: 35px; 
             font-weight: bold; 
             color: dodgerblue;
             margin-bottom: 0px;
@@ -58,7 +64,7 @@ class SmartPrintApp(QMainWindow):
 
         # ===== MAIN CONTENT =====
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(15)
+        content_layout.setSpacing(5)
         main_layout.addLayout(content_layout)
 
         # === LEFT SIDE (Preview) ===
@@ -66,22 +72,21 @@ class SmartPrintApp(QMainWindow):
         left_panel.setSpacing(10)
         content_layout.addLayout(left_panel, stretch=2)
 
-        # Preview Frame - Dynamic paper-size preview
+        # Preview Frame - Set to A4 dimensions from start
         self.preview_frame = QFrame()
         self.preview_frame.setStyleSheet("""
-                    border: 2px dashed #ccc;
-                    background: white;
-                    margin: 5px;
-                """)
-        self.preview_frame.setMinimumSize(200, 200)  # Minimum size
+                border: 2px dashed #ccc;
+                background: white;
+                margin: 5px;
+            """)
+        # Set initial size to A4 dimensions (matches loaded state)
+        self.preview_frame.setFixedSize(595, 842)  # A4 at 72 DPI (210x297mm)
 
         self.image_preview = QLabel()
         self.image_preview.setAlignment(Qt.AlignCenter)
-        self.image_preview.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
-
         preview_layout = QVBoxLayout(self.preview_frame)
-        preview_layout.setContentsMargins(0, 0, 0, 0)
         preview_layout.addWidget(self.image_preview)
+        left_panel.setAlignment(Qt.AlignCenter)
         left_panel.addWidget(self.preview_frame)
 
 
@@ -92,14 +97,13 @@ class SmartPrintApp(QMainWindow):
         self.image_slider.valueChanged.connect(self.show_image_at_index)
         left_panel.addWidget(self.image_slider)
 
-        # Load Button
-        self.load_btn = QPushButton("📁 Load Images Folder")
+        self.load_btn = QPushButton("🖼️ Load Images")
         self.load_btn.setStyleSheet("""
-            font-size: 14px; 
-            padding: 6px;
-            margin-top: 5px;
-        """)
-        self.load_btn.clicked.connect(self.load_image_folder)
+                font-size: 14px; 
+                padding: 6px;
+                margin-top: 5px;
+            """)
+        self.load_btn.clicked.connect(self.load_individual_images)  # Changed connection
         left_panel.addWidget(self.load_btn)
 
         # === RIGHT SIDE (Controls) ===
@@ -170,8 +174,8 @@ class SmartPrintApp(QMainWindow):
         paper_layout.setSpacing(8)
 
         self.paper_combo = QComboBox()
-        self.paper_combo.addItems(["A4 (210x297mm)", "Letter (216x279mm)", "Legal (216x356mm)"])
-        self.paper_combo.currentIndexChanged.connect(self.update_preview)
+        self.paper_combo.addItems(["A4 (210x297mm)"])  # Only A4 option
+        self.paper_combo.setEnabled(False)  # Disable the combobox
         paper_layout.addWidget(QLabel("Paper Size:"))
         paper_layout.addWidget(self.paper_combo)
 
@@ -182,7 +186,7 @@ class SmartPrintApp(QMainWindow):
         paper_layout.addWidget(self.orient_combo)
 
         self.dpi_combo = QComboBox()
-        self.dpi_combo.addItems(["300 DPI", "600 DPI", "1200 DPI"])
+        self.dpi_combo.addItems(["600 DPI", "300 DPI", "1200 DPI"])
         paper_layout.addWidget(QLabel("Quality:"))
         paper_layout.addWidget(self.dpi_combo)
 
@@ -200,26 +204,37 @@ class SmartPrintApp(QMainWindow):
         """)
         print_btn.clicked.connect(self.print_images)
         right_panel.addWidget(print_btn)
+        self.update_paper_preview_size()
 
     def load_printers(self):
         printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL, None, 1)
-        self.printer_combo.addItem("Save as PDF")
+        """self.printer_combo.addItem("Save as PDF")"""
         for printer in printers:
             self.printer_combo.addItem(printer[2])
+        self.printer_count = self.printer_combo.count()
+        self.printer_combo.setCurrentIndex(self.printer_count-1)
 
-    def load_image_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select Image Folder")
-        if folder:
-            self.image_files = [
-                os.path.join(folder, f) for f in os.listdir(folder)
-                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff'))
-            ]
-            if self.image_files:
-                # Initialize rotations for all images
-                self.image_rotations = {img: 0 for img in self.image_files}
-                self.image_slider.setRange(0, len(self.image_files) - 1)
-                self.show_image_at_index(0)
-                self.update_paper_preview_size()  # Force preview update
+    def load_individual_images(self):
+        """Select multiple individual image files"""
+        files, _ = QFileDialog.getOpenFileNames(
+            self,
+            "Select Images",
+            "",
+            "Images (*.png *.jpg *.jpeg *.bmp *.tiff);;All Files (*)"
+        )
+        if files:
+            self._load_images([f for f in files if os.path.isfile(f)])
+
+    def _load_images(self, file_paths):
+        """Common loading logic"""
+        self.image_files = file_paths
+        if self.image_files:
+            self.image_rotations = {img: 0 for img in self.image_files}
+            self.image_slider.setRange(0, len(self.image_files) - 1)
+            self.show_image_at_index(0)
+            self.update_preview()
+        else:
+            QMessageBox.warning(self, "No Images", "No valid images selected!")
 
     def show_image_at_index(self, index):
         if 0 <= index < len(self.image_files):
@@ -375,7 +390,14 @@ class SmartPrintApp(QMainWindow):
             painter.end()
 
 if __name__ == "__main__":
+    import sys
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtGui import QIcon
+
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon("smart.ico"))
+
     window = SmartPrintApp()
     window.show()
     sys.exit(app.exec())
+
