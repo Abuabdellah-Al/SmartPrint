@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./smart.ico" alt="App Icon" >
+  <img src="assets/icon.ico" alt="App Icon" >
 </p>
 
 # 🖨️Smart Print
