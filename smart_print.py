@@ -16,10 +16,17 @@ from PySide6.QtPrintSupport import QPrinter, QPrintDialog
 from PySide6.QtCore import Qt, QSize, QMarginsF, QSettings, QRectF, QSizeF
 from PySide6.QtGui import QPageLayout
 from PySide6.QtGui import QPageSize, QPageLayout
+
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller."""
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
 class SmartPrintApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowIcon(QIcon("smart.ico"))  # or .png
+        self.setWindowIcon(QIcon(resource_path("assets/icon.ico")))  # or .png
         self.printer_count = None
         self.setWindowTitle("Smart Print")
         self.setMinimumSize(760, 832)
@@ -395,7 +402,7 @@ if __name__ == "__main__":
     from PySide6.QtGui import QIcon
 
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon("smart.ico"))
+    app.setWindowIcon(QIcon("assets/icon.ico"))
 
     window = SmartPrintApp()
     window.show()
